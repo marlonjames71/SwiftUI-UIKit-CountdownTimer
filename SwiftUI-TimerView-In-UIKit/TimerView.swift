@@ -11,6 +11,8 @@ struct TimerView: View {
 	@StateObject private var manager: TimerManager
 	@State private var timerValue: Int = 10
 	
+	@State private var showingFinishedAlert = false
+	
 	@Environment(\.colorScheme) var colorScheme
 	
 	init(manager: TimerManager) {
@@ -38,6 +40,14 @@ struct TimerView: View {
 					}
 			}
 			.frame(width: 150, height: 150)
+			.onReceive(manager.timerFinished) { _ in
+				showingFinishedAlert = true
+			}
+			.alert("🥳 Timer Finished 🥳", isPresented: $showingFinishedAlert) {
+				Button("Sweet!") {
+					showingFinishedAlert = false
+				}
+			}
 			
 			HStack(spacing: 5) {
 				StepButton(stepBy: -1, value: $timerValue).tint(.stepButtonColor1)
