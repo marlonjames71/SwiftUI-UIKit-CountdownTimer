@@ -7,85 +7,112 @@
 
 import SwiftUI
 
-struct StepButton: View {
+struct StepButton<T: SignedNumeric & AdditiveArithmetic & Comparable>: View {
 	
-	init(stepBy step: Int, time: Binding<TimeInterval>) {
-		self.stepValue = step
-		self._time = time
+	init(stepBy stepValue: T, value: Binding<T>) {
+		self.stepValue = stepValue
+		self._value = value
 	}
 	
-	let stepValue: Int
-	@Binding var time: TimeInterval
+	let stepValue: T
+	@Binding var value: T
 	
 	var body: some View {
 		Button {
-			adjustTime()
+			adjustValue()
 		} label: {
-			ZStack {
-				Circle()
-				Label("\(abs(stepValue))", systemImage: imageName)
-					.tint(.white)
-					.fontWeight(.bold)
-			}
+			Circle()
+				.fill(.tint)
+				.overlay {
+					GeometryReader { geometry in
+						HStack(spacing: 3) {
+							Image(systemName: symbolName)
+								.minimumScaleFactor(0.5)
+							
+							Text(String(describing: abs(stepValue)))
+								.lineLimit(1)
+								.font(.title3)
+								
+						}
+						.frame(width: geometry.size.width, height: geometry.size.height)
+						.minimumScaleFactor(0.7)
+						.foregroundStyle(.white)
+						.fontWeight(.bold)
+					}
+					.padding(10)
+				}
+				.padding(5)
+				.background(.tint.secondary)
+				.clipShape(Circle())
 		}
-		.frame(minWidth: 30, minHeight: 30)
-		.disabled(stepValue == 0)
-		.padding(5)
-		.background(.tint.secondary)
-		.clipShape(Circle())
+		.buttonStyle(.scaleOnPress(scaleAmount: 0.9))
+		.disabled(stepValue == T.zero)
 	}
 	
-	private func adjustTime() {
-		guard stepValue != 0 else { return }
+	private func adjustValue() {
+		guard stepValue != T.zero else { return }
 		
-		if stepValue > 0 {
-			time += TimeInterval(abs(stepValue))
+		if stepValue > T.zero {
+			value += stepValue
 		} else {
-			guard time > 0 else { return }
-			time -= TimeInterval(abs(stepValue))
+			let newValue = value - abs(stepValue)
+			guard value > T.zero, newValue > T.zero else { return }
+			value = newValue
 		}
 	}
 	
-	private var imageName: String {
+	private var symbolName: String {
+		// hides the symbol if value is 0
 		guard stepValue != 0 else { return "" }
+		
 		return stepValue > 0 ? "plus" : "minus"
 	}
 }
 
-extension StepButton {
-	enum Step {
-		case increment(by: Int)
-		case decrement(by: Int)
-		
-		var value: Int {
-			switch self {
-			case .increment(by: let value),
-					.decrement(by: let value):
-				value
-			}
-		}
-	}
-}
-
 #Preview {
-	@Previewable @State var time: TimeInterval = 0
-	
-	VStack(spacing: 100) {
-		Text("\(Int(max(0, time.rounded(.up))))")
-			.monospaced()
-			.font(.largeTitle)
-		
-		HStack(spacing: 40) {
-			Group {
-				StepButton(stepBy: -1, time: $time)
-					.tint(Color.indigo)
-				StepButton(stepBy: 1, time: $time)
-					.tint(Color.indigo)
-				StepButton(stepBy: -5, time: $time)
-					.tint(Color.orange)
-				StepButton(stepBy: 5, time: $time)
-					.tint(Color.orange)
+	@Previewable @State var time: Int = 0
+	@Previewable @State var readings: Double = 800
+
+	VStack(spacing: 50) {
+		HStack(alignment: .bottom, spacing: 12) {
+			HStack(spacing: 20) {
+				Group {
+					StepButton(stepBy: -1, value: $time)
+					StepButton(stepBy: 1, value: $time)
+				}
+				.tint(Color.indigo)
+				.frame(width: 100)
 			}
+			
+			Spacer()
+			
+			Text("\(time)")
+				.monospaced()
+				.font(.largeTitle)
+				.minimumScaleFactor(0.6)
+				.lineLimit(1)
+				.padding(.bottom, 5)
+		}
+		.padding(.horizontal)
+		
+		HStack(alignment: .bottom, spacing: 12) {
+			HStack(spacing: 20) {
+				Group {
+					StepButton(stepBy: -3.9, value: $readings)
+					StepButton(stepBy: 3.942, value: $readings)
+				}
+				.tint(Color.indigo)
+				.frame(width: 100)
+			}
+			
+			Spacer()
+			
+			Text(readings, format: .number.precision(.fractionLength(2)))
+				.monospaced()
+				.font(.largeTitle)
+				.minimumScaleFactor(0.6)
+				.lineLimit(1)
+				.padding(.bottom, 5)
 		}
 		.padding(.horizontal)
 	}

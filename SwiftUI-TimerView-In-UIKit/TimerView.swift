@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TimerView: View {
 	@StateObject private var manager: TimerManager
-	@State private var timerValue: Double = 10
+	@State private var timerValue: Int = 10
 	
 	@Environment(\.colorScheme) var colorScheme
 	
@@ -39,17 +39,19 @@ struct TimerView: View {
 			}
 			.frame(width: 150, height: 150)
 			
-			HStack(spacing: 20) {
-				StepButton(stepBy: -1, time: $timerValue).tint(.indigo)
-				StepButton(stepBy: 1, time: $timerValue).tint(.indigo)
-				StepButton(stepBy: -5, time: $timerValue).tint(.orange)
-				StepButton(stepBy: 5, time: $timerValue).tint(.orange)
+			HStack(spacing: 5) {
+				StepButton(stepBy: -1, value: $timerValue).tint(.stepButtonColor1)
+				StepButton(stepBy: 1, value: $timerValue).tint(.stepButtonColor1)
+				Spacer(minLength: 8)
+				StepButton(stepBy: -5, value: $timerValue).tint(.stepButtonColor2)
+				StepButton(stepBy: 5, value: $timerValue).tint(.stepButtonColor2)
 			}
 			.disabled(manager.timerState == .running || manager.timerState == .paused)
-			.padding(.vertical, 50)
+			.padding(.top, 50)
+			.padding(.bottom, 20)
 			.onChange(of: timerValue) { _, newValue in
-				manager.duration = newValue
-				manager.time = newValue
+				manager.duration = TimeInterval(newValue)
+				manager.time = TimeInterval(newValue)
 			}
 			
 			HStack {
@@ -64,16 +66,15 @@ struct TimerView: View {
 						.background(.cyan)
 						.clipShape(RoundedRectangle(cornerRadius: 16))
 				}
-				.buttonStyle(.scaleOnPress)
+				.buttonStyle(.scaleOnPress())
 				.disabled(manager.timerState == .running)
-				.opacity(manager.timerState == .running ? 0.5 : 1)
 				
 				Button {
 					if manager.timerState == .running {
 						manager.stopTimer()
 					} else {
 						manager.timerState == .ready
-						? manager.startTimer(for: timerValue)
+						? manager.startTimer(for: TimeInterval(timerValue))
 						: manager.resumeTimer()
 					}
 				} label: {
@@ -85,7 +86,7 @@ struct TimerView: View {
 						.background(manager.timerState == .running ? .red : .trim)
 						.clipShape(RoundedRectangle(cornerRadius: 16))
 				}
-				.buttonStyle(.scaleOnPress)
+				.buttonStyle(.scaleOnPress())
 			}
 			.fontWeight(.bold)
 		}
@@ -106,15 +107,21 @@ struct TimerView: View {
 }
 
 struct ScaleOnPressButtonStyle: ButtonStyle {
+	let scaleAmount: Double
+	@Environment(\.isEnabled) var enabled
+	
 	func makeBody(configuration: Configuration) -> some View {
 		configuration.label
 			.scaleEffect(configuration.isPressed ? 0.96 : 1)
-			.animation(.linear(duration: 0.2), value: configuration.isPressed)
+			.opacity(enabled ? 1 : 0.6)
+			.animation(.linear(duration: 0.1), value: configuration.isPressed)
 	}
 }
 
 extension ButtonStyle where Self == ScaleOnPressButtonStyle {
-	static var scaleOnPress: ScaleOnPressButtonStyle { .init() }
+	static func scaleOnPress(scaleAmount: Double = 0.96) -> ScaleOnPressButtonStyle {
+		.init(scaleAmount: scaleAmount)
+	}
 }
 
 #Preview {
