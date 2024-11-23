@@ -90,7 +90,7 @@ struct TimerView: View {
 			}
 			.fontWeight(.bold)
 		}
-		.padding(.horizontal, 24)
+//		.padding(.horizontal, 24)
 	}
 	
 	private var startStopButtonText: String {

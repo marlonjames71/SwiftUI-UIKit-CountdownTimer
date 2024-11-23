@@ -26,7 +26,6 @@ final class TimerManager: ObservableObject {
 		case ready
 		case running
 		case paused
-		case finished
 	}
 
 	private func connectTimer() {
